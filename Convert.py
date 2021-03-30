@@ -181,7 +181,7 @@ def handler(event, context):
                 # Create SQS client
                 sqs = boto3.client('sqs')
 
-                queue_url = 'https://sqs.ap-northeast-2.amazonaws.com/580729374129/dev-showprise-convert'
+                queue_url = 'xxxx'
                 show_srl = sourceS3Key
                 print('show_srl:')
                 print(show_srl)

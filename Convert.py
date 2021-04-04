@@ -9,8 +9,6 @@ import boto3
 import datetime
 import random
 import urlparse
-# import io
-# from PIL import Image
 
 from botocore.client import ClientError
 from botocore.config import Config
@@ -21,7 +19,7 @@ def handler(event, context):
     sourceS3Key = event['Records'][0]['s3']['object']['key']
     sourceS3 = 's3://'+ sourceS3Bucket + '/' + sourceS3Key
     sourceS3Basename = os.path.splitext(os.path.basename(sourceS3))[0]
-    # destinationS3 = 's3://' + os.environ['DestinationBucket']
+
     destinationS3 = 's3://xxxx'
     destinationS3Thumb = 's3://xxxxx'
     destinationS3basename = os.path.splitext(os.path.basename(destinationS3))[0]
@@ -41,8 +39,6 @@ def handler(event, context):
     # Use MediaConvert SDK UserMetadata to tag jobs with the assetID
     # Events from MediaConvert will have the assetID in UserMedata
     jobMetadata = {'assetID': assetID}
-    # print("boto3 version:"+boto3.__version__)
-    # print("botocore version:"+botocore.__version__)
 
     print (json.dumps(event))
 
@@ -173,18 +169,15 @@ def handler(event, context):
                         }
                         ]
                     )
-                print('job:')
-                print(job)
+
                 job_id = job['Job']['Id']
-                print(job_id)
             except Exception as e:
                 # Create SQS client
                 sqs = boto3.client('sqs')
 
                 queue_url = 'xxxx'
                 show_srl = sourceS3Key
-                print('show_srl:')
-                print(show_srl)
+
                 # Send message to SQS queue
                 response = sqs.send_message(
                     QueueUrl=queue_url,
@@ -195,7 +188,6 @@ def handler(event, context):
                         show_srl
                     )
                 )
-                print(response['MessageId'])
 
                 print 'Exception: %s' % e
                 statusCode = 500
@@ -203,8 +195,6 @@ def handler(event, context):
         elif(rotate > 0  and 'true' in isorigin):
             try:
                 transcoder = boto3.client('elastictranscoder', 'ap-northeast-1', config=config)
-                # pipeline_id = read_pipeline(transcoder, 'MP4 Transcode')
-                # input_file = os.path.basename(sourceS3Key)
                 if ('true' in ismuted):
                     lowJob = transcoder.create_job(
                         PipelineId='1524038804778-d81ha3',
@@ -243,18 +233,14 @@ def handler(event, context):
                         }
                         ]
                     )
-                print('job:')
-                print(job)
                 job_id = job['Job']['Id']
-                print(job_id)
             except Exception as e:
                 # Create SQS client
                 sqs = boto3.client('sqs')
 
                 queue_url = 'xx'
                 show_srl = sourceS3Key
-                print('show_srl:')
-                print(show_srl)
+
                 # Send message to SQS queue
                 response = sqs.send_message(
                     QueueUrl=queue_url,
@@ -265,7 +251,6 @@ def handler(event, context):
                         show_srl
                     )
                 )
-                print(response['MessageId'])
 
                 print 'Exception: %s' % e
                 statusCode = 500
@@ -275,14 +260,10 @@ def handler(event, context):
             # Update the job settings with the source video from the S3 event and destination
             # paths for converted videos
             jobSettings['Inputs'][0]['FileInput'] = sourceS3
-            print('width:')
-            print(width)
 
             if width > 0 and width < 721 and height > 0 and height < 721:
                 jobSettings['OutputGroups'][0]['Outputs'][0]['VideoDescription']['Width'] = width
                 jobSettings['OutputGroups'][0]['Outputs'][0]['VideoDescription']['Height'] = height
-                print('width1 :')
-                print(width + 12)
             elif width > height:
                 jobSettings['OutputGroups'][0]['Outputs'][0]['VideoDescription']['Width'] = 1024
                 jobSettings['OutputGroups'][0]['Outputs'][0]['VideoDescription']['Height'] = 576
@@ -301,16 +282,10 @@ def handler(event, context):
                 jobSettings['OutputGroups'][0]['Outputs'][0]['AudioDescriptions'].pop()
                 jobSettings['OutputGroups'][1]['Outputs'][0]['AudioDescriptions'].pop()
 
-            print('jobSettings:')
-            print(json.dumps(jobSettings))
-
             # Convert the video using AWS Elemental MediaConvert
             job = client.create_job(Role=mediaConvertRole, UserMetadata=jobMetadata, Settings=jobSettings)
-            print (json.dumps(job, default=str))
         elif (rotate == 0  and 'true' in isorigin):
             jobSettings['Inputs'][0]['FileInput'] = sourceS3
-            print('width:')
-            print(width)
 
             if width > height:
                 jobSettings['OutputGroups'][1]['Outputs'][0]['VideoDescription']['Width'] = 640
@@ -324,12 +299,8 @@ def handler(event, context):
             if ('true' in ismuted):
                 jobSettings['OutputGroups'][1]['Outputs'][0]['AudioDescriptions'].pop()
 
-            print('jobSettings:')
-            print(json.dumps(jobSettings))
-
             # Convert the video using AWS Elemental MediaConvert
             job = client.create_job(Role=mediaConvertRole, UserMetadata=jobMetadata, Settings=jobSettings)
-            print (json.dumps(job, default=str))
 
     except Exception as e:
         # Create SQS client
@@ -337,8 +308,6 @@ def handler(event, context):
 
         queue_url = 'xxx'
         show_srl = sourceS3Key
-        print('show_srl:')
-        print(show_srl)
         # Send message to SQS queue
         response = sqs.send_message(
             QueueUrl=queue_url,
@@ -349,15 +318,12 @@ def handler(event, context):
                 show_srl
             )
         )
-        print(response['MessageId'])
 
         print 'Exception: %s' % e
         statusCode = 500
         raise
 
     finally:
-        print('finally:')
-
         return {
             'statusCode': statusCode,
             'body': json.dumps(body),
